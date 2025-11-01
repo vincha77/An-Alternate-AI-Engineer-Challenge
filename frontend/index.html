@@ -469,6 +469,7 @@
         function setLoading(loading) {
             state.isLoading = loading;
             elements.sendButton.disabled = loading || !elements.userInput.value.trim();
+            elements.clearButton.disabled = loading;
             elements.loadingIndicator.style.display = loading ? 'block' : 'none';
         }
 

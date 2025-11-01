@@ -204,6 +204,23 @@
             font-size: 12px;
         }
 
+        .btn-outline-secondary {
+            border-color: var(--border-color);
+            color: var(--text-muted);
+            background-color: transparent;
+        }
+
+        .btn-outline-secondary:hover:not(:disabled) {
+            border-color: #60a5fa;
+            color: var(--text-primary);
+            background-color: rgba(96, 165, 250, 0.1);
+        }
+
+        .btn-outline-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* Ensure good contrast for all text */
         ::placeholder {
             color: var(--text-muted);
@@ -289,8 +306,18 @@
                     <!-- Chat Header -->
                     <div class="chat-header">
                         <h6>Conversation</h6>
-                        <div id="loadingIndicator" class="loading-indicator" style="display: none;">
-                            Streaming…
+                        <div class="d-flex align-items-center gap-2">
+                            <button 
+                                id="clearButton" 
+                                class="btn btn-sm btn-outline-secondary"
+                                type="button"
+                                title="Clear chat history"
+                            >
+                                <i class="bi bi-trash"></i> Clear
+                            </button>
+                            <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                                Streaming…
+                            </div>
                         </div>
                     </div>
 
@@ -341,6 +368,7 @@
             messagesContainer: document.getElementById('messagesContainer'),
             userInput: document.getElementById('userInput'),
             sendButton: document.getElementById('sendButton'),
+            clearButton: document.getElementById('clearButton'),
             loadingIndicator: document.getElementById('loadingIndicator'),
             errorAlert: document.getElementById('errorAlert')
         };
@@ -444,6 +472,24 @@
             elements.loadingIndicator.style.display = loading ? 'block' : 'none';
         }
 
+        // Clear chat function
+        function clearChat() {
+            if (state.isLoading) {
+                // Don't clear while loading
+                return;
+            }
+            // Confirm before clearing if there are messages
+            if (state.messages.length > 0) {
+                if (!confirm('Are you sure you want to clear the chat history?')) {
+                    return;
+                }
+            }
+            state.messages = [];
+            state.error = null;
+            renderMessages();
+            showError(null);
+        }
+
         // Handle send button click
         async function handleSend() {
             const input = elements.userInput.value.trim();
@@ -485,6 +531,8 @@
 
         // Event listeners
         elements.sendButton.addEventListener('click', handleSend);
+        
+        elements.clearButton.addEventListener('click', clearChat);
 
         elements.userInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {

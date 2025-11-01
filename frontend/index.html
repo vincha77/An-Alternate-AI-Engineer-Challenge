@@ -347,7 +347,10 @@
 
         // Stream chat function
         async function streamChat(developerMessage, userMessage, model, onChunk) {
-            const res = await fetch('/api/chat', {
+            // Determine API endpoint - use direct backend URL if proxy fails
+            const apiEndpoint = '/api/chat';
+            
+            const res = await fetch(apiEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -358,8 +361,28 @@
             });
 
             if (!res.ok) {
-                const errorText = await res.text().catch(() => res.statusText);
-                throw new Error(`Failed to connect to chat endpoint: ${res.status} ${res.statusText} - ${errorText}`);
+                // Try to parse as JSON error response
+                let errorMessage = '';
+                try {
+                    const errorData = await res.json();
+                    errorMessage = errorData.message || errorData.error || 'Unknown error';
+                    if (errorData.details) {
+                        errorMessage += ` (${errorData.details})`;
+                    }
+                } catch (e) {
+                    // If not JSON, read as text
+                    const errorText = await res.text().catch(() => res.statusText);
+                    errorMessage = errorText || res.statusText;
+                }
+                
+                // Provide helpful error message
+                if (res.status === 502) {
+                    errorMessage = 'Cannot connect to backend. Please ensure the backend is running on port 8000 and OPENAI_API_KEY is set.';
+                } else if (res.status === 500) {
+                    errorMessage = 'Backend error: ' + (errorMessage || 'Please check backend logs and ensure OPENAI_API_KEY is configured.');
+                }
+                
+                throw new Error(errorMessage);
             }
 
             if (!res.body) {
